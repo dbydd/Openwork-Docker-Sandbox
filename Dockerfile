@@ -1,5 +1,5 @@
 # Build stage - compile OpenWork Orchestrator from source
-FROM oven/bun:1 AS builder
+FROM node:20-bookworm AS builder
 
 WORKDIR /build
 
@@ -9,7 +9,13 @@ RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
 
 # Copy openwork monorepo source
 COPY openwork/package.json openwork/pnpm-lock.yaml openwork/pnpm-workspace.yaml* ./
@@ -18,7 +24,7 @@ COPY openwork/patches ./patches
 COPY openwork/apps ./apps
 COPY openwork/packages ./packages
 
-# Install pnpm
+# Enable corepack and install pnpm
 RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 
 # Install dependencies
@@ -28,7 +34,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter openwork-orchestrator build:bin
 
 # Production stage
-FROM oven/bun:1-slim
+FROM node:20-bookworm-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
