@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  openwork:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openwork-orchestrator:latest
+    container_name: openwork
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+      - "${OPENCODE_SERVER_PORT:-4096}:${OPENCODE_SERVER_PORT:-4096}"
+    volumes:
+      - ${OPENWORK_MOUNT_PATH:-./workspace}:/workspace:rw
+      - openwork-sidecar-cache:/home/openwork/.cache/openwork/sidecars
+      # Optional: mount additional directories into /workspace/extra
+      # - /path/on/host:/workspace/extra/data:ro
+    environment:
+      - OPENWORK_APPROVAL=auto
+      - OPENWORK_VERBOSE=1
+      - OPENWORK_LOG_FORMAT=json
+      - OPENWORK_SIDECAR_DIR=/home/openwork/.cache/openwork/sidecars
+      - OPENWORK_OPENCODE_HOT_RELOAD=1
+      - OPENWORK_OPENCODE_HOT_RELOAD_DEBOUNCE_MS=500
+      - OPENWORK_OPENCODE_HOT_RELOAD_COOLDOWN_MS=1000
+      - OPENCODE_SERVER_PORT=${OPENCODE_SERVER_PORT:-4096}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  openwork-sidecar-cache:
+    driver: local
