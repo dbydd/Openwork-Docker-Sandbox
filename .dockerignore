@@ -1,0 +1,45 @@
+# Git
+.openwork/.git
+.openwork/.gitignore
+
+# Node
+**/node_modules
+**/.pnpm-store
+
+# Build outputs (we build in container)
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+
+# Development files
+**/.env
+**/.env.local
+**/.env.*.local
+
+# IDE
+**/.vscode
+**/.idea
+**/*.swp
+**/*.swo
+
+# OS
+**/.DS_Store
+**/Thumbs.db
+
+# Test and coverage
+**/coverage
+**/.nyc_output
+**/*.test.ts
+**/*.spec.ts
+
+# Documentation (not needed for build)
+**/*.md
+**/docs
+**/*.mdc
+**/*.mdx
+
+# Misc
+**/.npmrc
+**/.infisical.json
+**/LICENSE
+**/CHANGELOG*

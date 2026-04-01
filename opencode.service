@@ -1,0 +1,15 @@
+[Unit]
+Description=OpenCode CLI (connects to OpenWork container)
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/manual_pkgs/openwork_docker_sandbox
+ExecStartPre=/bin/bash -c 'for i in {1..30}; do curl -sf http://localhost:8787/health && exit 0; sleep 2; done; exit 1'
+ExecStart=/usr/local/bin/opencode connect http://localhost:8787
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

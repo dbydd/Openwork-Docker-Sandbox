@@ -27,10 +27,10 @@ Directory structure:
 
 ## Files
 
-- `Dockerfile` - Builds the OpenWork Orchestrator image
+- `Dockerfile` - Builds the OpenWork Orchestrator image from source
 - `docker-compose.yml` - Container orchestration config
 - `.env.example` - Environment variable template
-- `openwork.service` - Systemd user service for auto-start
+- `opencode.service` - Systemd user service for local OpenCode CLI
 - `install.sh` - Setup and installation script
 
 ## Quick Start
@@ -52,20 +52,64 @@ docker compose logs -f
 
 The Docker image builds the OpenWork Orchestrator from source using Bun. OpenCode sidecars are downloaded on first run and cached in a Docker volume.
 
-## Auto-Start on Login
+## Auto-Start on Boot
 
-The systemd user service will automatically start OpenWork when you log in:
+OpenWork container uses `restart: unless-stopped` policy - automatically starts on boot. No systemd service needed.
+
+### Local OpenCode CLI Service
+
+Local OpenCode CLI connects to containerized OpenWork while keeping secrets on your machine:
 
 ```bash
-# Install the service
-./install.sh --install-service
+# Install OpenCode CLI service
+./install.sh --install-opencode-service
 
 # Manage the service
-systemctl --user status openwork
-systemctl --user stop openwork
-systemctl --user start openwork
-systemctl --user disable openwork  # Disable auto-start
+systemctl --user status opencode
+systemctl --user stop opencode
+systemctl --user start opencode
+systemctl --user disable opencode  # Disable auto-start
 ```
+
+**Architecture:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Local Machine                                              │
+│  ┌─────────────────┐    ┌───────────────────────────────┐  │
+│  │  OpenCode CLI   │───▶│  ~/.config/opencode/          │  │
+│  │  (systemd)      │    │  - secrets                     │  │
+│  │                 │    │  - credentials                 │  │
+│  └────────┬────────┘    │  - API keys                    │  │
+│           │              └───────────────────────────────┘  │
+│           │ connects                                      │
+│           ▼                                                │
+│  ┌─────────────────┐                                       │
+│  │  localhost:8787 │                                       │
+│  └────────┬────────┘                                       │
+└───────────┼─────────────────────────────────────────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│  Docker Container        │
+│  ┌─────────────────────┐ │
+│  │  OpenWork Server    │ │
+│  │  (port 8787)        │ │
+│  └─────────────────────┘ │
+│  ┌─────────────────────┐ │
+│  │  OpenCode Sidecar   │ │
+│  │  (port 4096)        │ │
+│  └─────────────────────┘ │
+│  ┌─────────────────────┐ │
+│  │  workspace/         │ │
+│  │  (mounted volume)   │ │
+│  └─────────────────────┘ │
+└─────────────────────────┘
+```
+
+**Why local OpenCode?**
+- Secrets remain on your local machine (not in container)
+- API keys and credentials stay secure in `~/.config/opencode/`
+- Container is ephemeral - secrets persist locally
 
 ## Configuration
 
